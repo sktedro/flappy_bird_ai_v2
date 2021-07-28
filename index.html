@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+		<meta charset="UTF-8">
+		<title>Flappy bird v2</title>
+		<link rel="stylesheet" href="style.css">
+</head>
+<body onload="setUp()">
+	<div id="game">
+		<div id="block"></div>
+		<div id="hole"></div>
+		<div id="character"></div>
+	</div>
+	<div id="instructions">
+		You can jump by pressing the spacebar and reset the game by pressing
+		escape.
+	</div>
+	<div id="speedModify">
+		You can also modify the speed:
+		<div class="slidecontainer">
+			<input type="range" min="1" max="100" value="10" class="slider"
+			id="speedSlider">
+		</div>
+		<p id="actualSpeed"></p><br>
+	</div>
+</body>
+<script src="script.js"></script>
+</html>
