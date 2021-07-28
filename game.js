@@ -77,27 +77,35 @@ setInterval(function(){
 document.body.onkeyup = function(e){
   //Press space to jump
   if(e.key == " " && !dead){
-    vertSpeed = jumpHeight;
+    jump();
   }
   //Press escape to restart
   if(e.key == "Escape"){
-    dead = 0;
-
-    vertSpeed = 0.0;
-
-    //Reset the bird
-    birdHeight = canvasHeight/2.0 + birdRadius/2.0;
-    character.style.top = birdHeight + "px";
-    document.getElementById("character").style.backgroundColor = "green";
-
-    //Reset the animation
-    document.getElementById('hole').style.animation = "none";
-    document.getElementById('block').style.animation = "none";
-    document.getElementById("hole").offsetHeight;
-    document.getElementById('block').offsetHeight;
-    document.getElementById('hole').style.animation = null;
-    document.getElementById('block').style.animation = null;
-    document.getElementById('hole').style.animationPlayState = "running";
-    document.getElementById('block').style.animationPlayState = "running";
+    restart();
   }
+}
+
+function jump(){
+  vertSpeed = jumpHeight;
+}
+
+function restart(){
+  dead = 0;
+
+  vertSpeed = 0.0;
+
+  //Reset the bird
+  birdHeight = canvasHeight/2.0 + birdRadius/2.0;
+  character.style.top = birdHeight + "px";
+  document.getElementById("character").style.backgroundColor = "green";
+
+  //Reset the animation
+  document.getElementById('hole').style.animation = "none";
+  document.getElementById('block').style.animation = "none";
+  document.getElementById("hole").offsetHeight;
+  document.getElementById('block').offsetHeight;
+  document.getElementById('hole').style.animation = null;
+  document.getElementById('block').style.animation = null;
+  document.getElementById('hole').style.animationPlayState = "running";
+  document.getElementById('block').style.animationPlayState = "running";
 }
