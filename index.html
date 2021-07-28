@@ -5,7 +5,7 @@
 		<title>Flappy bird v2</title>
 		<link rel="stylesheet" href="style.css">
 </head>
-<body onload="setUp()">
+<body onload="setup()">
 	<div id="game">
 		<div id="block"></div>
 		<div id="hole"></div>
@@ -23,7 +23,12 @@
 		</div>
 		<p id="actualSpeed"></p><br>
 	</div>
+	<div id="info">
+		Statistics and information:
+		<br>Score: <div id="score"></div>
+	</div>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
 <script src="game.js"></script>
 <script src="nn.js"></script>
 </html>

@@ -5,6 +5,8 @@ var blockWidth = 50.0; //Width of the barrier
 var jumpHeight = 5.0; //Vertical speed to gain when jumping
 
 var dead = 0; //Is the bird dead?
+var score = -1;
+var scoreHelper = 0; //Helps to only count one barrier as one point
 var vertSpeed = 0.0; //Vertical speed (set to 0.0 as initial)
 var blockLeft; //X coordinate of the left side of the barrier
 var holeTop; //Y coordinate of the top side of the gap
@@ -18,15 +20,30 @@ var hole = document.getElementById("hole");
 var character = document.getElementById("character");
 var speed = document.getElementById("speedSlider").value; //Game speed
 
+var aiToggle = 0;
+var nn; //Neural network
+var nnInputs = [];
+var prediction;
+
 //Y coordinate of the top of the bird
 var birdHeight = canvasHeight - parseInt(window.getComputedStyle(character).getPropertyValue("top")); 
 
 
-function setUp(){
+function setup(){
   block.style.width = blockWidth + "px";
   hole.style.width = blockWidth + "px";
   hole.style.height = holeHeight + "px";
   character.style.width = character.style.height = birdRadius + "px";
+
+  if(aiToggle){
+    nnSetup(3, 6, 2);
+  }
+}
+
+function nnSetup(a, b, c){
+  nn = new NeuralNetwork(a, b, c);
+  nn.createModel();
+  tf.setBackend('cpu');
 }
 
 //Generate new barrier
@@ -36,6 +53,26 @@ hole.addEventListener('animationiteration', () => {
 });
 
 setInterval(function(){
+
+  //Predict and jump with AI
+  if(aiToggle){
+    var xDiff = (blockLeft + (blockWidth / 2)) - (birdRadius / 2); //Horizontal difference of the center of the bird and the center of the block
+    var yDiff = (birdHeight - (birdRadius / 2)) - (holeTop - (holeHeight / 2)); //Vertical difference of the center of the bird and the center of the hole
+    prediction = nn.predict([vertSpeed, xDiff, yDiff]);
+    if(prediction[0] > prediction[1]){
+      jump();
+    }
+  }
+
+  //Count score
+  if(blockLeft > canvasWidth / 2 && scoreHelper == 0){
+    scoreHelper = 1;
+    score++;
+  }else if(blockLeft < canvasWidth / 2 && scoreHelper == 1){
+    scoreHelper = 0;
+  }
+  document.getElementById("score").innerHTML = score;
+
   //Adjust the bird height and his vertical speed
   birdHeight = birdHeight + vertSpeed * speed;
   character.style.top = (canvasHeight - birdHeight) + "px";
@@ -72,6 +109,7 @@ setInterval(function(){
     document.getElementById("block").style.animation = "block " + 1.5*(1/speed) + "s infinite linear";
     document.getElementById("hole").style.animation = "block " + 1.5*(1/speed) + "s infinite linear";
   }
+
 }, 10); //Every 10 ms
 
 document.body.onkeyup = function(e){
@@ -91,6 +129,7 @@ function jump(){
 
 function restart(){
   dead = 0;
+  score = -1;
 
   vertSpeed = 0.0;
 

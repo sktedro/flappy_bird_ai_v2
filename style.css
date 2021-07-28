@@ -74,4 +74,8 @@
   background: #04AA6D; /* Green background */
   cursor: pointer; /* Cursor on hover */
 }
-
+#info{
+	position: relative;
+	text-align: center;
+	font-size: 18pt;
+}
