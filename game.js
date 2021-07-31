@@ -4,12 +4,10 @@ var pipeWidth = 50.0; //Width of the barrier
 
 var jumpHeight = 5.0; //Vertical speed to gain when jumping
 
-var score = 0;
 var vertSpeed = 0.0; //Vertical speed (set to 0.0 as initial)
 var blockLeft; //X coordinate of the left side of the barrier
 var holeTop; //Y coordinate of the top side of the gap
 
-//Don't change these values
 var canvasWidth = 500.0;
 var canvasHeight = 500.0;
 
@@ -22,17 +20,20 @@ var prediction;
 
 var mouse = 0;
 
-var bird;
+let birdsTotal = 1;
+let bird = [];
 let button;
 
 function Bird(){
+  this.score = 0;
   this.y = canvasHeight / 2;
   this.x = birdRadius + 10;
   this.vertSpeed = 0.0;
   this.dead = 0;
+  this.color = Math.random() * 155 + 50;
 
   this.draw = function(){
-    fill(0, 255, 0);
+    fill(this.color);
     this.y -= this.vertSpeed * speed;
     this.vertSpeed -= 0.2 * speed;
     /* if(this.vertSpeed < -5.0){
@@ -53,16 +54,15 @@ function Pipe(){
 
   this.draw = function(){
     fill(0);
-    if(!bird.dead){
+    if(isAnyBirdAlive()){
       this.x -= 5 * speed;
     }
     if(this.x <= - pipeWidth){
       this.y = Math.random() * 300 + holeHeight / 2;
       this.x = canvasWidth;
-      if(!bird.dead){
-        score++;
-        document.getElementById("score").innerHTML = "Score: " + score;
-      }
+
+    document.getElementById("score").innerHTML = "Highest score: " + getHighestScore();
+
     }
     rect(this.x, 0, pipeWidth, this.y - (holeHeight / 2));
     rect(this.x, this.y + (holeHeight / 2), pipeWidth, canvasHeight);
@@ -99,28 +99,23 @@ function draw(){
   background(220);
   pipe.draw();
 
-  if(mouseIsPressed && mouse == 0 && !bird.dead){
-    bird.jump();
+  if(mouseIsPressed && mouse == 0){
+    for(let i = 0; i < birdsTotal; i++){
+      if(!bird[i].dead){
+        bird[i].jump();
+      }
+    }
     mouse = 1;
   }
 
-  if(bird.y < birdRadius ||
-    bird.y > canvasHeight - birdRadius ||
-    (pipe.x < birdRadius + 10 &&
-      pipe.x > - pipeWidth &&
-      (bird.y + birdRadius > pipe.y + (holeHeight / 2) ||
-        bird.y - birdRadius < pipe.y - (holeHeight / 2)
-      ))){
-    bird.dead = 1;
+  for(let i = 0; i < birdsTotal; i++){
+    if(!bird[i].dead){
+      bird[i].draw();
+      bird[i].dead = detectCollision(i);
+    }
   }
 
-  if(!bird.dead){
-    bird.draw();
-  }
-
-  //Speed adjusting
-  speed = document.getElementById("speedSlider").value / 10;
-  document.getElementById("actualSpeed").innerHTML = "Speed: " + speed + "x";
+  adjustSpeed();
 }
 
 function nnSetup(a, b, c){
@@ -130,13 +125,55 @@ function nnSetup(a, b, c){
 }
 
 function restart(){
-  score = 0;
-  document.getElementById("score").innerHTML = "Score: " + score;
-  bird = new Bird();
+  document.getElementById("score").innerHTML = "Highest score: 0";
+  for(let i = 0; i < birdsTotal; i++){
+    bird[i] = new Bird();
+  }
   pipe = new Pipe();
 }
 
 
+function getHighestScore(){
+  let highestScore = 0;
+  for(let i = 0; i < birdsTotal; i++){
+    if(!bird[i].dead){
+      bird[i].score++;
+      if(bird[i].score > highestScore){
+        highestScore = bird[i].score;
+      }
+    }
+  }
+  return highestScore;
+}
+
+function isAnyBirdAlive(){
+  for(let i = 0; i < birdsTotal; i++){
+    if(!bird[i].dead){
+      return 1;
+    }
+  }
+  return 0;
+}
+
+function detectCollision(i){
+  if(bird[i].y < birdRadius){
+    return 1;
+  }else if(bird[i].y > canvasHeight - birdRadius){
+    return 1;
+  }else if(
+      pipe.x < birdRadius + 10 && 
+      pipe.x > - pipeWidth &&
+      (bird[i].y + birdRadius > pipe.y + (holeHeight / 2) || bird[i].y - birdRadius < pipe.y - (holeHeight / 2))
+      ){
+    return 1;
+  }
+  return 0;
+}
+
+function adjustSpeed(){
+  speed = document.getElementById("speedSlider").value / 10;
+  document.getElementById("actualSpeed").innerHTML = "Speed: " + speed + "x";
+}
 
 
 /*
