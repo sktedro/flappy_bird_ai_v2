@@ -1,3 +1,4 @@
+let birdLeftOffset = 10;
 var birdRadius = 12.5; //Height and width of the bird
 var holeHeight = 100.0; //Height of the gaps
 var pipeWidth = 50.0; //Width of the barrier
@@ -14,7 +15,7 @@ var canvasHeight = 500.0;
 var speed = document.getElementById("speedSlider").value; //Game speed
 
 var aiToggle = 0;
-var nn; //Neural network
+var nn = []; //Neural network
 var nnInputs = [];
 var prediction;
 
@@ -27,7 +28,7 @@ let button;
 function Bird(){
   this.score = 0;
   this.y = canvasHeight / 2;
-  this.x = birdRadius + 10;
+  this.x = birdRadius + birdLeftOffset;
   this.vertSpeed = 0.0;
   this.dead = 0;
   this.color = Math.random() * 155 + 50;
@@ -61,7 +62,7 @@ function Pipe(){
       this.y = Math.random() * 300 + holeHeight / 2;
       this.x = canvasWidth;
 
-    document.getElementById("score").innerHTML = "Highest score: " + getHighestScore();
+      document.getElementById("score").innerHTML = "Highest score: " + getHighestScore();
 
     }
     rect(this.x, 0, pipeWidth, this.y - (holeHeight / 2));
@@ -87,7 +88,9 @@ function setup(){
   restart();
 
   if(aiToggle){
-    nnSetup(3, 6, 2);
+    for(let i = 0; i < birdsTotal; i++){
+      nn[i] = nnSetup(3, 6, 2);
+    }
   }
 }
 
@@ -116,12 +119,28 @@ function draw(){
   }
 
   adjustSpeed();
+
+  //Predict and jump with AI
+  if(aiToggle){
+    if(!isAnyBirdAlive()){
+      restart();
+    }
+    for(let i = 0; i < birdsTotal; i++){
+      var xDiff = pipe.x - (birdLeftOffset + (birdRadius / 2)); //Horizontal difference of the center of the bird and the center of the pipe 
+      var yDiff = bird[i].y - pipe.y; //Vertical difference of the center of the bird and the center of the hole
+      prediction = nn[i].predict([bird[i].vertSpeed, xDiff, yDiff]);
+      if(prediction[0] > prediction[1]){
+        bird[i].jump();
+      }
+    }
+  }
 }
 
 function nnSetup(a, b, c){
-  nn = new NeuralNetwork(a, b, c);
+  let nn = new NeuralNetwork(a, b, c);
   nn.createModel();
   tf.setBackend('cpu');
+  return nn;
 }
 
 function restart(){
@@ -161,10 +180,10 @@ function detectCollision(i){
   }else if(bird[i].y > canvasHeight - birdRadius){
     return 1;
   }else if(
-      pipe.x < birdRadius + 10 && 
-      pipe.x > - pipeWidth &&
-      (bird[i].y + birdRadius > pipe.y + (holeHeight / 2) || bird[i].y - birdRadius < pipe.y - (holeHeight / 2))
-      ){
+    pipe.x < birdRadius + 10 &&
+    pipe.x > - pipeWidth &&
+    (bird[i].y + birdRadius > pipe.y + (holeHeight / 2) || bird[i].y - birdRadius < pipe.y - (holeHeight / 2))
+  ){
     return 1;
   }
   return 0;
@@ -174,22 +193,3 @@ function adjustSpeed(){
   speed = document.getElementById("speedSlider").value / 10;
   document.getElementById("actualSpeed").innerHTML = "Speed: " + speed + "x";
 }
-
-
-/*
- * setInterval(function(){
- *
- *   //Predict and jump with AI
- *   if(aiToggle){
- *     var xDiff = (blockLeft + (pipeWidth / 2)) - (birdRadius / 2); //Horizontal difference of the center of the bird and the center of the block
- *     var yDiff = (birdHeight - (birdRadius / 2)) - (holeTop - (holeHeight / 2)); //Vertical difference of the center of the bird and the center of the hole
- *     prediction = nn.predict([vertSpeed, xDiff, yDiff]);
- *     if(prediction[0] > prediction[1]){
- *       jump();
- *     }
- *   }
- *
- *
- * }, 10); //Every 10 ms
- */
-
