@@ -5,29 +5,23 @@
 		<title>Flappy bird v2</title>
 		<link rel="stylesheet" href="style.css">
 </head>
-<body onload="setup()">
-	<div id="game">
-		<div id="block"></div>
-		<div id="hole"></div>
-		<div id="character"></div>
-	</div>
-	<div id="instructions">
-		You can jump by pressing the spacebar and reset the game by pressing
-		escape.
-	</div>
-	<div id="speedModify">
-		You can also modify the speed:
-		<div class="slidecontainer">
-			<input type="range" min="1" max="100" value="10" class="slider"
-			id="speedSlider">
-		</div>
-		<p id="actualSpeed"></p><br>
-	</div>
+<body>
 	<div id="info">
-		Statistics and information:
-		<br>Score: <div id="score"></div>
+		<div id="instructions">
+			You can jump by pressing the left mouse button.
+		</div>
+		<div id="speedModify">
+			<p id="actualSpeed"></p>
+			<div class="slidecontainer">
+				<input type="range" min="1" max="100" value="10" class="slider" id="speedSlider">
+			</div>
+		</div>
+		<div id="stats">
+			<div id="score"></div>
+		</div>
 	</div>
 </body>
+<script src="./p5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
 <script src="game.js"></script>
 <script src="nn.js"></script>
