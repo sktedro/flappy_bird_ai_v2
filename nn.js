@@ -1,10 +1,12 @@
 
 class NeuralNetwork{
   constructor(a, b, c){
+    tf.tidy(() => {
     this.input_nodes = a;
     this.hidden_nodes = b;
     this.output_nodes = c;
     this.createModel();
+    });
   }
 
   createModel(){
@@ -24,10 +26,12 @@ class NeuralNetwork{
   }
 
   predict(inputs){
-    const xs = tf.tensor2d([inputs]);
-    const ys = this.model.predict(xs);
-    const outputs = ys.dataSync();
-    return outputs;
+    return tf.tidy(() => {
+      const xs = tf.tensor2d([inputs]);
+      const ys = this.model.predict(xs);
+      const outputs = ys.dataSync();
+      return outputs;
+    });
   }
 }
 

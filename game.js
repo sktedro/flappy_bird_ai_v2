@@ -9,7 +9,7 @@ var vertSpeed = 0.0; //Vertical speed (set to 0.0 as initial)
 var blockLeft; //X coordinate of the left side of the barrier
 var holeTop; //Y coordinate of the top side of the gap
 
-var canvasWidth = 750.0;
+var canvasWidth = 600.0;
 var canvasHeight = 500.0;
 
 var speed = document.getElementById("speedSlider").value; //Game speed
@@ -145,12 +145,10 @@ function draw(){
 }
 
 function nnSetup(a, b, c){
-  return tf.tidy(() => {
-    let nn = new NeuralNetwork(a, b, c);
-    nn.createModel();
-    tf.setBackend('cpu');
-    return nn;
-  });
+  let nn = new NeuralNetwork(a, b, c);
+  nn.createModel();
+  tf.setBackend('cpu');
+  return nn;
 }
 
 function restart(){
@@ -165,13 +163,16 @@ function restart(){
 
   if(aiToggle){
     tf.tidy(() => {
-      if(runNumber > 1){ // Only get best weights and mutate if this is not the first run
+      if(runNumber == 1){
+        for(let i = 0; i < birdsTotal; i++){
+          nn[i] = nnSetup(4, 6, 2);
+        }
+      }else{ // Only get best weights and mutate if this is not the first run
         getBestWeights(); // Get best weights from the last run
-      }
-      for(let i = 0; i < birdsTotal; i++){
-        nn[i] = nnSetup(4, 6, 2);
-        if(runNumber > 1 && getHighestScore(0) != 0){
-          nn[i].model.setWeights(mutation());
+        for(let i = 0; i < birdsTotal; i++){
+          if(getHighestScore(0) != 0){
+            nn[i].model.setWeights(mutation());
+          }
         }
       }
     });
@@ -251,20 +252,18 @@ function getBestWeights(){ // A simple function to get indexes of the best birds
 }
 
 function mutation(){
-  return tf.tidy(() => {
-    let mutatedWeights = [];
-    for(let i = 0; i < bestWeights.length; i++){
-      let shape = bestWeights[i].shape;
-      let tensor = bestWeights[i];
-      let values = tensor.dataSync().slice();
-      for(let j = 0; j < values.length; j++){
-        if(Math.random(0, 1) < mutationProbability){
-          values[j] *= (1 + Math.random(- mutationVariability, mutationVariability));
-        }
+  let mutatedWeights = [];
+  for(let i = 0; i < bestWeights.length; i++){
+    let shape = bestWeights[i].shape;
+    let tensor = bestWeights[i];
+    let values = tensor.dataSync().slice();
+    for(let j = 0; j < values.length; j++){
+      if(Math.random(0, 1) < mutationProbability){
+        values[j] *= (1 + Math.random(- mutationVariability, mutationVariability));
       }
-      let newTensor = tf.tensor(values, shape);
-      mutatedWeights[i] = newTensor;
     }
-    return mutatedWeights;
-  });
+    let newTensor = tf.tensor(values, shape);
+    mutatedWeights[i] = newTensor;
+  }
+  return mutatedWeights;
 }
