@@ -1,36 +1,29 @@
-let birdLeftOffset = 10;
-var birdRadius = 12.5; //Height and width of the bird
-var holeHeight = 125.0; //Height of the gaps
-var pipeWidth = 50.0; //Width of the barrier
+let canvasWidth = 600.0;
+let canvasHeight = 500.0;
+let backgroundColor = 220;
 
-var jumpHeight = 5.0; //Vertical speed to gain when jumping
+let birdRadius = 12.5; // Radius of the bird's body
+let holeHeight = 125.0; // Height of the gaps
+let pipeWidth = 50.0; // Width of the barrier
+let jumpHeight = 5.0; // Vertical speed to gain when jumping
 
-var vertSpeed = 0.0; //Vertical speed (set to 0.0 as initial)
-var blockLeft; //X coordinate of the left side of the barrier
-var holeTop; //Y coordinate of the top side of the gap
 
-var canvasWidth = 600.0;
-var canvasHeight = 500.0;
+let birdsTotal = 100; // Total birds spawned
+let bird = []; // Array of all the birds
+let birdLeftOffset = 10; // Gap between the left wall and the bird
+let topScore = 0; // Top score of all generations
+let pipe; // A pipe. Only one exists at a time
+let speed = document.getElementById("speedSlider").value; // Game speed
+let mouse = 0; // Variable just to make sure clicking results in jumping only once
+let restartBtn; // Restart button
+let runNumber = 0; // "Generation number"
 
-var speed = document.getElementById("speedSlider").value; //Game speed
+let aiToggle = 1; // Toggle controlling the birds by a neural network
+let nn = []; // Neural networks (one for every bird)
+let mutationProbability = 0.20; // Probability of a certain weight to be mutated
+let mutationVariability = 0.05; // How much to mutate the weight
+let bestWeights = []; // Best weights taken from the best bird of the last generation
 
-var aiToggle = 1;
-var nn = []; //Neural network
-var nnInputs = [];
-var prediction;
-
-var mouse = 0;
-
-let runNumber = 0;
-
-let birdsTotal = 100;
-let bestWeights = [];
-let mutationProbability = 0.10; 
-let mutationVariability = 0.10; // How much to mutate the weight
-let bird = [];
-let button;
-
-let topScore = 0;
 
 function Bird(){
   this.score = 0;
@@ -44,9 +37,6 @@ function Bird(){
     fill(this.color);
     this.y -= this.vertSpeed * speed;
     this.vertSpeed -= 0.2 * speed;
-    /* if(this.vertSpeed < -5.0){
-      this.vertSpeed = -5.0;
-    } */
     ellipse(this.x, this.y, birdRadius * 2, birdRadius * 2);
   }
 
@@ -62,23 +52,23 @@ function Pipe(){
 
   this.draw = function(){
     fill(0);
-    if(isAnyBirdAlive()){
+    if(howManyBirdsAlive() != 0){
       this.x -= 5 * speed;
     }
     if(this.x <= - pipeWidth){
       this.y = Math.random() * (canvasHeight - holeHeight * 2) + holeHeight;
       this.x = canvasWidth;
-
       document.getElementById("score").innerHTML = "Highest score: " + getHighestScore(1);
       document.getElementById("topScore").innerHTML = "Highest score of all generations: " + topScore;
-
     }
+
     rect(this.x, 0, pipeWidth, this.y - (holeHeight / 2));
     rect(this.x, this.y + (holeHeight / 2), pipeWidth, canvasHeight);
   }
 }
 
 function setup(){
+  // Prepare the HTML
   document.getElementById("info").style.top = canvasHeight + 100 + "px";
   document.getElementById("info").style.width = canvasWidth + "px";
   document.getElementById("score").innerHTML = "Highest score: 0";
@@ -90,15 +80,14 @@ function setup(){
   let canvas = createCanvas(canvasWidth, canvasHeight);
   canvas.position(50, 50);
 
-  // Button
-  button = createButton("Restart");
-  button.position(canvasWidth / 4 + 50, 10);
-  button.size(canvasWidth / 2, 25);
-  button.mousePressed(restart);
+  // Restart button
+  restartBtn = createButton("Restart");
+  restartBtn.position(canvasWidth / 4 + 50, 10);
+  restartBtn.size(canvasWidth / 2, 25);
+  restartBtn.mousePressed(restart);
 
   // Set up the first pipe and the birds
   restart();
-
 }
 
 function mouseReleased(){
@@ -106,10 +95,11 @@ function mouseReleased(){
 }
 
 function draw(){
-  background(220);
+  background(backgroundColor);
   pipe.draw();
 
-  if(mouseIsPressed && mouse == 0){
+  // Jump if mouse is pressed
+  if(!aiToggle && mouseIsPressed && mouse == 0){
     for(let i = 0; i < birdsTotal; i++){
       if(!bird[i].dead){
         bird[i].jump();
@@ -118,25 +108,36 @@ function draw(){
     mouse = 1;
   }
 
+  // Detect collision and draw the bird if it is still alive
   for(let i = 0; i < birdsTotal; i++){
     if(!bird[i].dead){
-      bird[i].draw();
       bird[i].dead = detectCollision(i);
+      if(!bird[i].dead){
+        bird[i].draw();
+      }
     }
   }
 
+  // Get speed from the slider and apply it
   adjustSpeed();
+
+  // Update the number of living birds
   document.getElementById("alive").innerHTML = "Birds alive: " + howManyBirdsAlive();
 
-  //Predict and jump with AI
+  // Predict and jump with AI
   if(aiToggle){
-    if(!isAnyBirdAlive()){
+    // Restart automatically if all birds are dead
+    if(howManyBirdsAlive() == 0){
       restart();
     }
     for(let i = 0; i < birdsTotal; i++){
-      var xDiff = pipe.x - (birdLeftOffset + (birdRadius / 2)); //Horizontal difference of the center of the bird and the center of the pipe 
-      var yDiff = bird[i].y - pipe.y; //Vertical difference of the center of the bird and the center of the hole
-      prediction = nn[i].predict([bird[i].vertSpeed, bird[i].y, xDiff, yDiff]);
+      // Horizontal difference of the center of the bird and the center of the pipe 
+      let xDiff = pipe.x - (birdLeftOffset + (birdRadius / 2)); 
+      // Vertical difference of the center of the bird and the center of the hole
+      let yDiff = bird[i].y - pipe.y; 
+      // Also give the neural network the bird's vertical speed and height
+      let prediction = nn[i].predict([bird[i].vertSpeed, bird[i].y, xDiff, yDiff]);
+      // Follow the decision to jump or not
       if(prediction[0] > prediction[1]){
         bird[i].jump();
       }
@@ -157,18 +158,18 @@ function restart(){
   document.getElementById("topScore").innerHTML = "Highest score of all generations: " + topScore;
   document.getElementById("alive").innerHTML = "Birds alive: 0";
   document.getElementById("generation").innerHTML = "Generation: " + runNumber;
-  /* if(mutationVariability > 0.01){
-    mutationVariability /= runNumber;
-  } */
 
   if(aiToggle){
     tf.tidy(() => {
       if(runNumber == 1){
+        // Create the neural networks
         for(let i = 0; i < birdsTotal; i++){
           nn[i] = nnSetup(4, 6, 2);
         }
       }else{ // Only get best weights and mutate if this is not the first run
-        getBestWeights(); // Get best weights from the last run
+        // Get best weights from the last run
+        getBestWeights(); 
+        // Mutate the weights
         for(let i = 0; i < birdsTotal; i++){
           if(getHighestScore(0) != 0){
             nn[i].model.setWeights(mutation());
@@ -185,6 +186,8 @@ function restart(){
 }
 
 
+// Return highest score of all birds this generation (and prior to that,
+// increment their score if increment == 1)
 function getHighestScore(increment){
   let highestScore = 0;
   for(let i = 0; i < birdsTotal; i++){
@@ -201,6 +204,7 @@ function getHighestScore(increment){
   return highestScore;
 }
 
+// Return number of birds still alive
 function howManyBirdsAlive(){
   let alive = 0;
   for(let i = 0; i < birdsTotal; i++){
@@ -211,15 +215,7 @@ function howManyBirdsAlive(){
   return alive;
 }
 
-function isAnyBirdAlive(){
-  for(let i = 0; i < birdsTotal; i++){
-    if(!bird[i].dead){
-      return 1;
-    }
-  }
-  return 0;
-}
-
+// Check if a bird hit a pipe. Return 1 if yes
 function detectCollision(i){
   if(bird[i].y < birdRadius){
     return 1;
@@ -228,8 +224,7 @@ function detectCollision(i){
   }else if(
     pipe.x < birdRadius + 10 &&
     pipe.x > - pipeWidth &&
-    (bird[i].y + birdRadius > pipe.y + (holeHeight / 2) || bird[i].y - birdRadius < pipe.y - (holeHeight / 2))
-  ){
+    (bird[i].y + birdRadius > pipe.y + (holeHeight / 2) || bird[i].y - birdRadius < pipe.y - (holeHeight / 2))){
     return 1;
   }
   return 0;
@@ -240,18 +235,19 @@ function adjustSpeed(){
   document.getElementById("actualSpeed").innerHTML = "Speed: " + speed + "x";
 }
 
-function getBestWeights(){ // A simple function to get indexes of the best birds
+// A simple function to get the weights of the best bird
+function getBestWeights(){ 
   let bestBird = 0;
   for(let i = 0; i < birdsTotal; i++){
     if(bird[i].score > bestBird){
       bestBird = i;
     }
   }
-
   bestWeights = nn[bestBird].model.getWeights();
 }
 
-function mutation(){
+// Take the best weights and mutate them (once for every bird)
+function mutation(){ 
   let mutatedWeights = [];
   for(let i = 0; i < bestWeights.length; i++){
     let shape = bestWeights[i].shape;
