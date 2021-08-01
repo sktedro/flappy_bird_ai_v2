@@ -1,6 +1,6 @@
 let birdLeftOffset = 10;
 var birdRadius = 12.5; //Height and width of the bird
-var holeHeight = 100.0; //Height of the gaps
+var holeHeight = 125.0; //Height of the gaps
 var pipeWidth = 50.0; //Width of the barrier
 
 var jumpHeight = 5.0; //Vertical speed to gain when jumping
@@ -9,19 +9,24 @@ var vertSpeed = 0.0; //Vertical speed (set to 0.0 as initial)
 var blockLeft; //X coordinate of the left side of the barrier
 var holeTop; //Y coordinate of the top side of the gap
 
-var canvasWidth = 500.0;
+var canvasWidth = 750.0;
 var canvasHeight = 500.0;
 
 var speed = document.getElementById("speedSlider").value; //Game speed
 
-var aiToggle = 0;
+var aiToggle = 1;
 var nn = []; //Neural network
 var nnInputs = [];
 var prediction;
 
 var mouse = 0;
 
-let birdsTotal = 1;
+let runNumber = 0;
+
+let birdsTotal = 100;
+let bestWeights = [];
+let mutationProbability = 0.10; 
+let mutationVariability = 0.10; // How much to mutate the weight
 let bird = [];
 let button;
 
@@ -50,7 +55,7 @@ function Bird(){
 }
 
 function Pipe(){
-  this.y = Math.random() * 300 + holeHeight / 2;
+  this.y = Math.random() * (canvasHeight - holeHeight * 2) + holeHeight;
   this.x = canvasWidth;
 
   this.draw = function(){
@@ -59,7 +64,7 @@ function Pipe(){
       this.x -= 5 * speed;
     }
     if(this.x <= - pipeWidth){
-      this.y = Math.random() * 300 + holeHeight / 2;
+      this.y = Math.random() * (canvasHeight - holeHeight * 2) + holeHeight;
       this.x = canvasWidth;
 
       document.getElementById("score").innerHTML = "Highest score: " + getHighestScore();
@@ -72,7 +77,7 @@ function Pipe(){
 
 function setup(){
   document.getElementById("info").style.top = canvasHeight + 100 + "px";
-  document.getElementById("info").style.width = canvasHeight + "px";
+  document.getElementById("info").style.width = canvasWidth + "px";
 
   // Create the canvas
   let canvas = createCanvas(canvasWidth, canvasHeight);
@@ -87,11 +92,6 @@ function setup(){
   // Set up the first pipe and the birds
   restart();
 
-  if(aiToggle){
-    for(let i = 0; i < birdsTotal; i++){
-      nn[i] = nnSetup(3, 6, 2);
-    }
-  }
 }
 
 function mouseReleased(){
@@ -128,7 +128,7 @@ function draw(){
     for(let i = 0; i < birdsTotal; i++){
       var xDiff = pipe.x - (birdLeftOffset + (birdRadius / 2)); //Horizontal difference of the center of the bird and the center of the pipe 
       var yDiff = bird[i].y - pipe.y; //Vertical difference of the center of the bird and the center of the hole
-      prediction = nn[i].predict([bird[i].vertSpeed, xDiff, yDiff]);
+      prediction = nn[i].predict([bird[i].vertSpeed, bird[i].y, xDiff, yDiff]);
       if(prediction[0] > prediction[1]){
         bird[i].jump();
       }
@@ -137,14 +137,35 @@ function draw(){
 }
 
 function nnSetup(a, b, c){
-  let nn = new NeuralNetwork(a, b, c);
-  nn.createModel();
-  tf.setBackend('cpu');
-  return nn;
+  return tf.tidy(() => {
+    let nn = new NeuralNetwork(a, b, c);
+    nn.createModel();
+    tf.setBackend('cpu');
+    return nn;
+  });
 }
 
 function restart(){
+  runNumber++;
   document.getElementById("score").innerHTML = "Highest score: 0";
+  /* if(mutationVariability > 0.01){
+    mutationVariability /= runNumber;
+  } */
+
+  if(aiToggle){
+    tf.tidy(() => {
+      if(runNumber > 1){ // Only get best weights and mutate if this is not the first run
+        getBestWeights(); // Get best weights from the last run
+      }
+      for(let i = 0; i < birdsTotal; i++){
+        nn[i] = nnSetup(4, 6, 2);
+        if(runNumber > 1){ 
+          nn[i].model.setWeights(mutation());
+        }
+      }
+    });
+  }
+
   for(let i = 0; i < birdsTotal; i++){
     bird[i] = new Bird();
   }
@@ -192,4 +213,34 @@ function detectCollision(i){
 function adjustSpeed(){
   speed = document.getElementById("speedSlider").value / 10;
   document.getElementById("actualSpeed").innerHTML = "Speed: " + speed + "x";
+}
+
+function getBestWeights(){ // A simple function to get indexes of the best birds
+  let bestBird = 0;
+  for(let i = 0; i < birdsTotal; i++){
+    if(bird[i].score > bestBird){
+      bestBird = i;
+    }
+  }
+
+  bestWeights = nn[bestBird].model.getWeights();
+}
+
+function mutation(){
+  return tf.tidy(() => {
+    let mutatedWeights = [];
+    for(let i = 0; i < bestWeights.length; i++){
+      let shape = bestWeights[i].shape;
+      let tensor = bestWeights[i];
+      let values = tensor.dataSync().slice();
+      for(let j = 0; j < values.length; j++){
+        if(Math.random(0, 1) < mutationProbability){
+          values[j] *= (1 + Math.random(- mutationVariability, mutationVariability));
+        }
+      }
+      let newTensor = tf.tensor(values, shape);
+      mutatedWeights[i] = newTensor;
+    }
+    return mutatedWeights;
+  });
 }
