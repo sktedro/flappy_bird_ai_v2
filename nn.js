@@ -26,9 +26,45 @@ class NeuralNetwork{
     return tf.tidy(() => {
       const xs = tf.tensor2d([inputs]);
       const ys = this.model.predict(xs);
-      const outputs = ys.dataSync();
-      return outputs;
+      return ys.dataSync();
     });
   }
 }
 
+
+// Set up a neural network
+function nnSetup(a, b, c){
+  let nn = new NeuralNetwork(a, b, c);
+  nn.createModel();
+  tf.setBackend('cpu');
+  return nn;
+}
+
+// A simple function to get the weights of the best bird
+function getBestWeights(){
+  let bestBird = 0;
+  for(let i = 0; i < birdsTotal; i++){
+    if(bird[i].score > bestBird){
+      bestBird = i;
+    }
+  }
+  return bird[bestBird].nn.model.getWeights();
+}
+
+// Take the best weights and mutate them (once for every bird)
+function mutation(bestWeights){
+  let mutatedWeights = [];
+  for(let i = 0; i < bestWeights.length; i++){
+    let shape = bestWeights[i].shape;
+    let tensor = bestWeights[i];
+    let values = tensor.dataSync().slice();
+    for(let j = 0; j < values.length; j++){
+      if(Math.random(0, 1) < mutationProbability){
+        values[j] *= (1 + Math.random(- mutationVariability, mutationVariability));
+      }
+    }
+    let newTensor = tf.tensor(values, shape);
+    mutatedWeights[i] = newTensor;
+  }
+  return mutatedWeights;
+}
