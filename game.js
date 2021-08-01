@@ -30,6 +30,8 @@ let mutationVariability = 0.10; // How much to mutate the weight
 let bird = [];
 let button;
 
+let topScore = 0;
+
 function Bird(){
   this.score = 0;
   this.y = canvasHeight / 2;
@@ -67,7 +69,8 @@ function Pipe(){
       this.y = Math.random() * (canvasHeight - holeHeight * 2) + holeHeight;
       this.x = canvasWidth;
 
-      document.getElementById("score").innerHTML = "Highest score: " + getHighestScore();
+      document.getElementById("score").innerHTML = "Highest score: " + getHighestScore(1);
+      document.getElementById("topScore").innerHTML = "Highest score of all generations: " + topScore;
 
     }
     rect(this.x, 0, pipeWidth, this.y - (holeHeight / 2));
@@ -78,6 +81,10 @@ function Pipe(){
 function setup(){
   document.getElementById("info").style.top = canvasHeight + 100 + "px";
   document.getElementById("info").style.width = canvasWidth + "px";
+  document.getElementById("score").innerHTML = "Highest score: 0";
+  document.getElementById("topScore").innerHTML = "Highest score of all generations: 0";
+  document.getElementById("alive").innerHTML = "Birds alive: 0";
+  document.getElementById("generation").innerHTML = "Generation: 0";
 
   // Create the canvas
   let canvas = createCanvas(canvasWidth, canvasHeight);
@@ -119,6 +126,7 @@ function draw(){
   }
 
   adjustSpeed();
+  document.getElementById("alive").innerHTML = "Birds alive: " + howManyBirdsAlive();
 
   //Predict and jump with AI
   if(aiToggle){
@@ -148,6 +156,9 @@ function nnSetup(a, b, c){
 function restart(){
   runNumber++;
   document.getElementById("score").innerHTML = "Highest score: 0";
+  document.getElementById("topScore").innerHTML = "Highest score of all generations: " + topScore;
+  document.getElementById("alive").innerHTML = "Birds alive: 0";
+  document.getElementById("generation").innerHTML = "Generation: " + runNumber;
   /* if(mutationVariability > 0.01){
     mutationVariability /= runNumber;
   } */
@@ -159,7 +170,7 @@ function restart(){
       }
       for(let i = 0; i < birdsTotal; i++){
         nn[i] = nnSetup(4, 6, 2);
-        if(runNumber > 1){ 
+        if(runNumber > 1 && getHighestScore(0) != 0){
           nn[i].model.setWeights(mutation());
         }
       }
@@ -173,17 +184,30 @@ function restart(){
 }
 
 
-function getHighestScore(){
+function getHighestScore(increment){
   let highestScore = 0;
   for(let i = 0; i < birdsTotal; i++){
-    if(!bird[i].dead){
+    if(!bird[i].dead && increment){
       bird[i].score++;
-      if(bird[i].score > highestScore){
-        highestScore = bird[i].score;
-      }
+    }
+    if(bird[i].score > highestScore){
+      highestScore = bird[i].score;
     }
   }
+  if(highestScore > topScore){
+    topScore = highestScore;
+  }
   return highestScore;
+}
+
+function howManyBirdsAlive(){
+  let alive = 0;
+  for(let i = 0; i < birdsTotal; i++){
+    if(!bird[i].dead){
+      alive++;
+    }
+  }
+  return alive;
 }
 
 function isAnyBirdAlive(){
