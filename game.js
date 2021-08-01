@@ -31,7 +31,8 @@ const minMutationVariability = 0.001; // Mutation variability won't go lower tha
 let mutationVariability = initialMutationVariability; 
 
 // AI variables
-const inputNodes = 3; // Inputs: vertical speed, X difference, Y difference
+// const inputNodes = 3; // Inputs: vertical speed, X difference, Y difference
+const inputNodes = 2; // Inputs: X difference, Y difference
 const hiddenNodes = 4;
 const outputNodes = 2;
 let highestScoreGen; // = 1 if this generation has a bird with the highest score of all generations
@@ -107,8 +108,9 @@ function draw(){
       let xDiff = pipe.x - (birdLeftOffset + (birdRadius / 2)); 
       // Vertical difference of the center of the bird and the center of the hole
       let yDiff = bird[i].y - pipe.y; 
-      // Also give the neural network the bird's vertical speed and height
-      let prediction = bird[i].nn.predict([bird[i].vertSpeed, xDiff, yDiff]);
+      // Also give the neural network the bird's vertical speed
+      // let prediction = bird[i].nn.predict([bird[i].vertSpeed, xDiff, yDiff]);
+      let prediction = bird[i].nn.predict([xDiff, yDiff]);
       // Follow the decision to jump or not
       if(prediction[0] > prediction[1]){
         bird[i].jump();
