@@ -8,11 +8,10 @@ class NeuralNetwork{
 
   createModel(){
     this.model = tf.sequential();
-
     const hidden = tf.layers.dense({
       units: this.hidden_nodes,
       inputShape: [this.input_nodes],
-      activation: "sigmoid" //TODO RELU: ?tf.keras.activations.relu,
+      activation: "relu"
     });
     const output = tf.layers.dense({
       units: this.output_nodes,
@@ -52,15 +51,16 @@ function getBestWeights(){
 }
 
 // Take the best weights and mutate them (once for every bird)
-function mutation(bestWeights){
+// This is pretty much copied from Daniel Shiffman. Big thanks
+function mutation(bestWeights, probability, variability){
   let mutatedWeights = [];
   for(let i = 0; i < bestWeights.length; i++){
     let shape = bestWeights[i].shape;
     let tensor = bestWeights[i];
     let values = tensor.dataSync().slice();
     for(let j = 0; j < values.length; j++){
-      if(Math.random(0, 1) < mutationProbability){
-        values[j] *= (1 + Math.random(- mutationVariability, mutationVariability));
+      if(Math.random(0, 1) < probability){
+        values[j] *= (1 + Math.random(- variability, variability));
       }
     }
     let newTensor = tf.tensor(values, shape);
