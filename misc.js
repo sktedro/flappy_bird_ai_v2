@@ -31,7 +31,7 @@ function getHighestScore(){
 }
 
 // Return number of birds still alive
-function howManyBirdsAlive(){
+function getBirdsAlive(){
   let alive = 0;
   for(let i = 0; i < birdsTotal; i++){
     if(!bird[i].dead){
@@ -41,26 +41,12 @@ function howManyBirdsAlive(){
   return alive;
 }
 
-// Check if a bird hit a pipe. Return 1 if yes
-function detectCollision(i){
-  if(bird[i].y < birdRadius){
-    return 1;
-  }else if(bird[i].y > canvasHeight - birdRadius){
-    return 1;
-  }else if(
-    pipe.x < birdRadius + 10 &&
-    pipe.x > - pipeWidth &&
-    (bird[i].y + birdRadius > pipe.y + (holeHeight / 2) || bird[i].y - birdRadius < pipe.y - (holeHeight / 2))){
-    return 1;
-  }
-  return 0;
-}
-
 // Adjust speed based on the slider and update the stats
 function adjustSpeed(){
   speed = document.getElementById("speedSlider").value;
   document.cookie = speed;
-  document.getElementById("actualSpeed").innerHTML = "Framerate setting: " + speed + "fps<br>Actual framerate: " + int(frameRate()) + "fps";
+  // document.getElementById("actualSpeed").innerHTML = "Framerate setting: " + speed + "fps<br>Actual framerate: " + int(frameRate()) + "fps";
+  document.getElementById("actualSpeed").innerHTML = "Actual speed: " + speed + "x";
 }
 
 // Adjust the mutation variability based on the highest score

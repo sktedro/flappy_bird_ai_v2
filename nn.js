@@ -39,6 +39,21 @@ function nnSetup(a, b, c){
   return nn;
 }
 
+function predictJump(pipe, bird){
+  // Horizontal difference of the center of the bird and the center of the pipe
+  let xDiff = pipe.x - (birdLeftOffset + (birdRadius / 2));
+  // Vertical difference of the center of the bird and the center of the hole
+  let yDiff = bird.y - pipe.y;
+  // Also give the neural network the bird's vertical speed
+  let prediction = bird.nn.predict([bird.vertSpeed, xDiff, yDiff]);
+  // let prediction = bird.nn.predict([xDiff, yDiff]);
+  // Follow the decision to jump or not
+  if(prediction[0] > prediction[1]){
+    return 1;
+  }
+  return 0;
+}
+
 // A simple function to get the weights of the best bird
 function getBestWeights(){
   let bestBird = 0;

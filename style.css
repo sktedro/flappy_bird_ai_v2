@@ -17,7 +17,7 @@
 	font-size: 18pt;
 }
 /* Code for the slider taken from W3Schools */
-.slidecontainer {
+#slidecontainer {
   width: 500px; 
 	margin: 0 auto;
 	margin-top: 10px;
