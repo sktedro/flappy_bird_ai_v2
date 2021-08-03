@@ -37,7 +37,7 @@ The second version runs in a browser!
 
 The second version has much better graphics, lol.
 
-The second version uses a ML platform that was written by someone who knows
+The second version uses a library that was written by someone who knows
 what he is doing (tensorflow.js).
 
 The second version has adjustable speed.
