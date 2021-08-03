@@ -39,6 +39,8 @@ function nnSetup(a, b, c){
   return nn;
 }
 
+// Feed the data to the neural network and return normalized output
+// I should normalize the inputs as well, but it seems to work well without it
 function predictJump(pipe, bird){
   // Horizontal difference of the center of the bird and the center of the pipe
   let xDiff = pipe.x - (birdLeftOffset + (birdRadius / 2));

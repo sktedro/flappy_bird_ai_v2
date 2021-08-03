@@ -7,7 +7,6 @@ const backgroundColor = [50, 200, 255];
 const birdRadius = 15.0; // Radius of the bird's body
 const holeHeight = 150.0; // Height of the gaps
 const pipeWidth = 75.0; // Width of the barrier
-// const jumpHeight = 15.0; // Vertical speed to gain when jumping
 const jumpHeight = 13.5; // Vertical speed to gain when jumping
 const fallSpeed = 1.25;
 const birdLeftOffset = 10; // Gap between the left wall and the bird
@@ -34,7 +33,6 @@ let mutationVariability = initialMutationVariability;
 
 // AI variables
 const inputNodes = 3; // Inputs: vertical speed, X difference, Y difference
-// const inputNodes = 2; // Inputs: X difference, Y difference
 const hiddenNodes = 2;
 const outputNodes = 2;
 const allRandomBirds = 10; // Percentage of birds which will not be mutated, but randomly initialized instead
@@ -56,6 +54,7 @@ function setup(){
   // Create the canvas
   let canvas = createCanvas(canvasWidth, canvasHeight);
   canvas.position(50, 50);
+  frameRate(30);
 
   // Create a restart button
   let restartBtn = createButton("Restart");
@@ -77,8 +76,6 @@ function setup(){
 
 // Runs in a continuous loop - once per frame
 function draw(){
-  // frameRate(int(speed));
-  frameRate(30);
   document.getElementById("fps").innerHTML = "Framerate: " + int(frameRate()) + "fps";
 
   for(let iter = 0; iter < speed; iter++){
@@ -157,8 +154,6 @@ function Bird(){
   }
   // Move the bird "according to physics"
   this.move = function(){
-    /* this.y -= this.vertSpeed * (frameRate() / frameRateDivisor);
-    this.vertSpeed -= 0.2 * (frameRate() / frameRateDivisor); */
     this.y -= this.vertSpeed;
     this.vertSpeed -= fallSpeed;
   }
@@ -196,7 +191,6 @@ function Pipe(){
   // Animate the pipe if there is a bird alive
   this.move = function(){
     if(getBirdsAlive() != 0){ 
-      /* this.x -= 5 * (frameRate() / frameRateDivisor); */
       this.x -= 15;
     }
   }
