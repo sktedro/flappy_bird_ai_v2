@@ -46,5 +46,9 @@ And many more which I can't think of right now.
 
 # Credits and sources
 
+TensorFlow.js: https://www.tensorflow.org/js
+
+p5.js: https://p5js.org/
+
 Huge thanks to Daniel Shiffman ("The Coding Train") for his online videos which
 inspired this small project and helped when I was stuck.
